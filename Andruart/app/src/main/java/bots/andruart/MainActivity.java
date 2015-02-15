@@ -50,8 +50,32 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void read(View v) {
-        TextView status = (TextView)findViewById(R.id.textView);
+        exchange((byte) -1);
+    }
 
+    public void stop(View v) {
+        exchange((byte) 1);
+    }
+
+    public void forward(View v) {
+        exchange((byte) 7);
+    }
+
+    public void backward(View v) {
+        exchange((byte) 6);
+    }
+
+    public void left(View v) {
+        exchange((byte) 5);
+    }
+
+    public void right(View v) {
+        exchange((byte) 3);
+    }
+
+    private byte exchange(byte code) {
+        byte result = (byte) -1;
+        TextView status = (TextView)findViewById(R.id.textView);
         UsbManager manager = (UsbManager)getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         if (availableDrivers.isEmpty()) {
@@ -68,10 +92,17 @@ public class MainActivity extends ActionBarActivity {
         try {
             port.open(connection);
             port.setParameters(9600, 8, 1, 0);
-            byte buf[] = new byte[16];
-            int n = port.read(buf, 3000);
-            //status.setText(getResources().getQuantityString(R.plurals.bytes_read, n, n));
-            status.setText(String.format("%d bytes read: %02x", n, buf[0]));
+            byte buf[] = new byte[1];
+            if (code == -1) {
+                int n = port.read(buf, 3000);
+                //status.setText(getResources().getQuantityString(R.plurals.bytes_read, n, n));
+                status.setText(String.format("%d bytes read: %02x", n, buf[0]));
+                result = buf[0];
+            } else {
+                buf[0] = code;
+                int n = port.write(buf, 3000);
+                status.setText(String.format("%d bytes written: %02x", n, buf[0]));
+            }
         } catch (IOException e) {
             status.setText(R.string.open_port_failed);
         } finally {
@@ -80,5 +111,6 @@ public class MainActivity extends ActionBarActivity {
             } catch (IOException e) {
             }
         }
+        return result;
     }
 }
