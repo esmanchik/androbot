@@ -3,8 +3,8 @@
 #include<avr/io.h>
 #include<util/delay.h>
 
-#define low(port, pin) port &= ~_BV(pin);
-#define high(port, pin) port |= _BV(pin);
+#define low(port, pin) port &= ~_BV(pin)
+#define high(port, pin) port |= _BV(pin)
 
 #define TRIG_PIN PC5
 #define ECHO_PIN PD2
@@ -121,42 +121,69 @@ void uart_ping( void )
     }
 }
 
+#define FL_PIN PC1
+#define BL_PIN PC2
+#define BR_PIN PC3
+#define FR_PIN PC4
+
+void stop() {
+    high(PORTC, FL_PIN);
+    high(PORTC, FR_PIN);
+    high(PORTC, BL_PIN);
+    high(PORTC, BR_PIN);
+}
+
+void move_forward() {
+    stop();
+    low(PORTC, FL_PIN);
+    low(PORTC, FR_PIN);
+}
+
+void move_backward() {
+    stop();
+    low(PORTC, BL_PIN);
+    low(PORTC, BR_PIN);
+}
+
+void rotate_left() {
+    stop();
+    low(PORTC, BL_PIN);
+    low(PORTC, FR_PIN);
+}
+
+void rotate_right() {
+    stop();
+    low(PORTC, FL_PIN);
+    low(PORTC, BR_PIN);
+}
+
 main()
 {
-    int d, i, cm, max, maxi;
+    unsigned char command;
+    unsigned int range;
     DDRC = 0xff; /* All pins of port C are output */
-    DDRD = 0x00; /* All pins of port D are input */
-    PORTC = 0x1e;
-    move(0, 0, 50);
-    d = 1;
+    DDRD = 0x02; /* Only pin 1 of port D is output */
+    PORTC = 0x1e; /* Don't measure, stop all motors */
+    USART_Init();
     while(1) {
-        move(-1 * d, 1 * d, ANGLE);
-        max = maxi = 0;
-        for (i = 0; i < 3; i++) {
-            if (i) {
-                move(1 * d, -1 * d, ANGLE);
-            }
-            cm = get_range();
-            if (max < cm && cm < TURNOUT_RANGE * 15) {
-                max = cm;
-                maxi = i;
-            }
-        }
-        if (max < TURNOUT_RANGE) {
-            move(1, -1, ANGLE * 4);
-        } else {
-            move(-1 * d, 1 * d, (2 - maxi) * ANGLE);
-            while (1) {
-                move(1, 1, 5);
-                cm = get_range();
-                if (TURNOUT_RANGE < cm && cm < max - 10) {
-                    max = cm;
-                } else {
-                    break;
-                }
+        command = USART_Receive();
+        command &= 0xf;
+        if (0 < command && command < 8) {
+            /*
+             * 7 - move forward
+             * 3 - rotate right
+             * 5 - rotate left
+             * 6 - move backward
+             * 1 - stop
+             */
+            switch (command) {
+            case 3: rotate_right(); break;
+            case 5: rotate_left(); break;
+            case 6: move_backward(); break;
+            case 7: move_forward(); break;
+            default: stop();
             }
         }
-        // move(0, 0, 30); // pause
-        d *= -1;
-    }
+        USART_Transmit(command | 0x10);
+   }
 }
