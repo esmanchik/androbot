@@ -27,13 +27,6 @@ int get_range() {
     i = echo = 0;
     while(PIND & 4 == 0) i++;
     while(PIND & 4) echo++;
-    i = echo; // debug blink
-    high(PORTC, PC0);
-    while (i > 0) {
-        _delay_ms(10);
-        i -= 1000;
-    }
-    low(PORTC, PC0); // end of debug blink
     return echo;
 }
 
