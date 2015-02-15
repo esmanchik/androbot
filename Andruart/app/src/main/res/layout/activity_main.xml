@@ -65,4 +65,14 @@
         android:onClick="right"
         android:singleLine="false" />
 
+    <CheckBox
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/measure"
+        android:id="@+id/measureCheckBox"
+        android:layout_below="@+id/leftButton"
+        android:layout_alignParentStart="true"
+        android:checked="true"
+        android:layout_toStartOf="@+id/backwardButton" />
+
 </RelativeLayout>

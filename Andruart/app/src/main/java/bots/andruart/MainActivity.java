@@ -8,6 +8,7 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.CheckBox;
 import android.widget.TextView;
 
 import com.hoho.android.usbserial.driver.UsbSerialDriver;
@@ -75,6 +76,8 @@ public class MainActivity extends ActionBarActivity {
 
     private byte exchange(byte code) {
         byte result = (byte) -1;
+        CheckBox measureCheckBox = (CheckBox)findViewById(R.id.measureCheckBox);
+        boolean measure = measureCheckBox.isChecked();
         TextView status = (TextView)findViewById(R.id.textView);
         UsbManager manager = (UsbManager)getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
@@ -94,14 +97,48 @@ public class MainActivity extends ActionBarActivity {
             port.setParameters(9600, 8, 1, 0);
             byte buf[] = new byte[1];
             if (code == -1) {
-                int n = port.read(buf, 3000);
+                int n = port.read(buf, 1000);
                 //status.setText(getResources().getQuantityString(R.plurals.bytes_read, n, n));
                 status.setText(String.format("%d bytes read: %02x", n, buf[0]));
                 result = buf[0];
             } else {
+                if (measure) {
+                    code |= 8;
+                }
                 buf[0] = code;
-                int n = port.write(buf, 3000);
-                status.setText(String.format("%d bytes written: %02x", n, buf[0]));
+                int n = port.write(buf, 1000);
+                if (measure) {
+                    int i, value = 0;
+                    for (i = 0; i < 4; i++) {
+                        n = port.read(buf, 1000);
+                        if (n < buf.length) {
+                            status.setText(String.format("%d bytes read: %04x", i, value));
+                            break;
+                        } else {
+                            value |=  (buf[0] & 0xf) << (i * 4);
+                        }
+                    }
+                    if (i < 4) {
+                        status.setText(String.format("%d bytes read: %04x", i, value));
+                    } else {
+                        status.setText(String.format("%d (0x%04x) cycles to the wall", value, value));
+                    }
+                    /*
+                    buf = new byte[4];
+                    n = port.read(buf, 1000);
+                    if (n < buf.length) {
+                        status.setText(String.format("%d bytes read: %02x", n, buf[0]));
+                    } else {
+                        n = buf[0] & 0xf;
+                        n |=  (buf[1] & 0xf) << 4;
+                        n |=  (buf[2] & 0xf) << 8;
+                        n |=  (buf[3] & 0xf) << 12;
+                        status.setText(String.format("Range is %d (0x%04x)", n, n));
+                    }
+                    */
+                } else {
+                    status.setText(String.format("%d bytes written: %02x", n, buf[0]));
+                }
             }
         } catch (IOException e) {
             status.setText(R.string.open_port_failed);
