@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Andruart</string>
+    <string name="hello_world">Hello world!</string>
+    <string name="action_settings">Settings</string>
+    <string name="read">Read</string>
+    <string name="no_device_found">No USB to UART device found</string>
+    <string name="all_is_fine">Everything is OK</string>
+    <string name="connect_failed">Failed to connect to driver</string>
+    <string name="open_port_failed">Failed to open UART port</string>
+    <plurals name="bytes_read">
+        <!--
+             As a developer, you should always supply "one" and "other"
+             strings. Your translators will know which strings are actually
+             needed for their language. Always include %d in "one" because
+             translators will need to use %d for languages where "one"
+             doesn't mean 1 (as explained above).
+          -->
+        <item quantity="one">%d byte read.</item>
+        <item quantity="other">%d bytes read.</item>
+    </plurals>
+
+</resources>
