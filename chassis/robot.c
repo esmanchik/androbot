@@ -60,6 +60,74 @@ void move(int left_wheel, int right_wheel, int deciseconds) {
 #define ANGLE 5
 #define TURNOUT_RANGE 750
 
+#define FOSC F_CPU // Clock Speed
+#define BAUD 9600
+
+void USART_Init()
+{
+    /* Calculated as FOSC/16/BAUD-1 */
+    unsigned int ubrr = 12; /* 5 on U2X = 0 */
+    /* Set baud rate */
+    UBRRH = (unsigned char)(ubrr>>8);
+    UBRRL = (unsigned char)ubrr;
+    UCSRA = 1<<U2X;
+    /* Enable receiver and transmitter */
+    UCSRB = (1<<RXEN)|(1<<TXEN);
+    /* Set frame format: 8data, 2stop bit */
+    //UCSRC = (1<<URSEL)|(1<<USBS)|(3<<UCSZ0);
+    /* Set frame format: 8data, 1stop bit, no parity */
+    UCSRC = (1<<URSEL)|(3<<UCSZ0);
+    /* Set frame format: 6data, 1stop bit, no parity */
+    //UCSRC = (1<<URSEL)|(1<<UCSZ0);
+}
+
+void USART_Transmit( unsigned char data )
+{
+    /* Wait for empty transmit buffer */
+    while ( !( UCSRA & (1<<UDRE)) )
+        ;
+    /* Put data into buffer, sends the data */
+    UDR = data;
+}
+
+unsigned char USART_Receive( void )
+{
+    /* Wait for data to be received */
+    while ( !(UCSRA & (1<<RXC)) )
+        ;
+    /* Get and return received data from buffer */
+    return UDR;
+}
+
+void send_int(unsigned int i) {
+    USART_Transmit ( i & 0xf );
+    USART_Transmit ( i >> 4 & 0xf );
+    USART_Transmit ( i >> 8 & 0xf );
+    USART_Transmit ( i >> 12 & 0xf );
+}
+
+void uart_ping( void )
+{
+    unsigned char b;
+    DDRC = 0xff;
+    PORTC = 0;
+    USART_Init ();
+    b = 0x09;
+    while (1) {
+        USART_Transmit(b);
+        _delay_ms(1000);
+        b++;
+        /*b = 0x5a;
+          USART_Transmit(b);
+          _delay_ms(1000);
+          /*b = USART_Receive();
+          PORTC = b;
+          _delay_ms(1000);
+          PORTC = 0;
+          _delay_ms(1000);*/
+    }
+}
+
 main()
 {
     int d, i, cm, max, maxi;
