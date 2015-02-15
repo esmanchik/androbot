@@ -167,23 +167,30 @@ main()
     USART_Init();
     while(1) {
         command = USART_Receive();
-        command &= 0xf;
-        if (0 < command && command < 8) {
+        command &= 0x1f;
+        if (0 < command && command < 16) {
             /*
              * 7 - move forward
              * 3 - rotate right
              * 5 - rotate left
              * 6 - move backward
              * 1 - stop
+             * 8 - measure
              */
-            switch (command) {
+            if (command & 8) {
+                /* acquire here as get_range resets port C */
+                range = get_range();
+            }
+            switch (command & 7) {
             case 3: rotate_right(); break;
             case 5: rotate_left(); break;
             case 6: move_backward(); break;
             case 7: move_forward(); break;
             default: stop();
             }
+            if (command & 8) {
+                send_int(range);
+            }
         }
-        USART_Transmit(command | 0x10);
    }
 }
