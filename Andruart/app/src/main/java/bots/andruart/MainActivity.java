@@ -108,14 +108,26 @@ public class MainActivity extends ActionBarActivity {
                 buf[0] = code;
                 int n = port.write(buf, 1000);
                 if (measure) {
-                    int i, value = 0;
-                    for (i = 0; i < 4; i++) {
+                    int i, value, attempts;
+                    attempts = value = i = 0;
+                    while (i < 4) {
+                        buf = new byte[4 - i];
                         n = port.read(buf, 1000);
-                        if (n < buf.length) {
+                        if (n > 0) {
+                            for (int j = 0; j < n; j++) {
+                                value |=  (buf[j] & 0xf) << ((i + j) * 4);
+                            }
+                            attempts = 0;
+                            i += n;
                             status.setText(String.format("%d bytes read: %04x", i, value));
-                            break;
                         } else {
-                            value |=  (buf[0] & 0xf) << (i * 4);
+                            attempts++;
+                            status.setText(String.format("%d attempt", attempts));
+                            if (attempts++ < 32) {
+                                continue;
+                            } else {
+                                break;
+                            }
                         }
                     }
                     if (i < 4) {
@@ -123,19 +135,6 @@ public class MainActivity extends ActionBarActivity {
                     } else {
                         status.setText(String.format("%d (0x%04x) cycles to the wall", value, value));
                     }
-                    /*
-                    buf = new byte[4];
-                    n = port.read(buf, 1000);
-                    if (n < buf.length) {
-                        status.setText(String.format("%d bytes read: %02x", n, buf[0]));
-                    } else {
-                        n = buf[0] & 0xf;
-                        n |=  (buf[1] & 0xf) << 4;
-                        n |=  (buf[2] & 0xf) << 8;
-                        n |=  (buf[3] & 0xf) << 12;
-                        status.setText(String.format("Range is %d (0x%04x)", n, n));
-                    }
-                    */
                 } else {
                     status.setText(String.format("%d bytes written: %02x", n, buf[0]));
                 }
