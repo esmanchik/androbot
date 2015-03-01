@@ -1,14 +1,87 @@
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools" android:layout_width="match_parent"
     android:layout_height="match_parent" android:paddingLeft="@dimen/activity_horizontal_margin"
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
     android:paddingBottom="@dimen/activity_vertical_margin" tools:context=".MainActivity"
-    >
+    android:orientation="vertical"
+    android:weightSum="1">
 
-    <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:id="@+id/textView" />
+    <FrameLayout
+        android:id="@+id/camera_preview"
+        android:layout_width="fill_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <RelativeLayout
+        android:layout_width="fill_parent"
+        android:layout_height="159dp">
+
+        <TextView android:text="@string/hello_world" android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:id="@+id/textView"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentEnd="true"
+            android:layout_alignStart="@+id/forwardButton"
+            android:layout_above="@+id/forwardButton" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/move_forward"
+            android:id="@+id/forwardButton"
+            android:onClick="forward"
+            android:layout_above="@+id/stopButton"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/stop"
+            android:id="@+id/stopButton"
+            android:onClick="stop"
+            android:layout_above="@+id/backwardButton"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/move_backward"
+            android:id="@+id/backwardButton"
+            android:onClick="backward"
+            android:layout_alignParentBottom="true"
+            android:layout_centerHorizontal="true" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/rotate_left"
+            android:id="@+id/leftButton"
+            android:onClick="left"
+            android:layout_above="@+id/backwardButton"
+            android:layout_toStartOf="@+id/backwardButton" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/rotate_right"
+            android:id="@+id/rightButton"
+            android:onClick="right"
+            android:singleLine="false"
+            android:layout_above="@+id/backwardButton"
+            android:layout_toEndOf="@+id/backwardButton" />
+
+        <CheckBox
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@string/measure"
+            android:id="@+id/measureCheckBox"
+            android:checked="true"
+            android:layout_alignParentTop="true"
+            android:layout_alignParentStart="true"
+            android:layout_alignEnd="@+id/leftButton" />
+
+    </RelativeLayout>
 
     <Button
         android:layout_width="wrap_content"
@@ -16,63 +89,6 @@
         android:text="@string/read"
         android:id="@+id/button"
         android:onClick="read"
-        android:layout_below="@+id/textView"
-        android:layout_alignParentEnd="true" />
+        android:layout_gravity="center_horizontal" />
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/move_forward"
-        android:id="@+id/forwardButton"
-        android:onClick="forward"
-        android:layout_alignTop="@+id/button"
-        android:layout_centerHorizontal="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/stop"
-        android:id="@+id/stopButton"
-        android:onClick="stop"
-        android:layout_above="@+id/backwardButton"
-        android:layout_alignParentStart="true" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/move_backward"
-        android:id="@+id/backwardButton"
-        android:onClick="backward"
-        android:layout_below="@+id/forwardButton"
-        android:layout_alignStart="@+id/forwardButton" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/rotate_left"
-        android:id="@+id/leftButton"
-        android:layout_alignBottom="@+id/backwardButton"
-        android:layout_alignParentStart="true"
-        android:onClick="left" />
-
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/rotate_right"
-        android:id="@+id/rightButton"
-        android:layout_alignBottom="@+id/backwardButton"
-        android:layout_alignParentEnd="true"
-        android:onClick="right"
-        android:singleLine="false" />
-
-    <CheckBox
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="@string/measure"
-        android:id="@+id/measureCheckBox"
-        android:layout_below="@+id/leftButton"
-        android:layout_alignParentStart="true"
-        android:checked="true"
-        android:layout_toStartOf="@+id/backwardButton" />
-
-</RelativeLayout>
+</LinearLayout>
