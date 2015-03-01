@@ -84,10 +84,6 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
-    public void read(View v) {
-        exchange((byte) -1);
-    }
-
     public void stop(View v) {
         exchange((byte) 1);
     }
