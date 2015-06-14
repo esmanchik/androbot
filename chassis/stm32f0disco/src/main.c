@@ -63,23 +63,13 @@ uint8_t recv() {
 	return USART_ReceiveData(USART2) & 15;
 }
 
-GPIO_TypeDef *code2gpio(uint8_t code) {
-    GPIO_TypeDef *gpio;
-    switch(code) {
-    case 0x0a: gpio = GPIOA; break;
-    case 0x0b: gpio = GPIOB; break;
-    case 0x0c: gpio = GPIOC; break;
-    //case 0x0d: gpio = GPIOD; break;
-    default: gpio = 0; break;
-    }
-    return gpio;
- }
+#define GPIOS_COUNT 3
 
-int main (void)
-{
-    uint32_t pins;
+int main (void) {
+    int i;
     uint8_t buf;
-    GPIO_TypeDef *gpio;
+    uint32_t bsrrs[GPIOS_COUNT];
+    GPIO_TypeDef *gpio, *gpios[] = { GPIOA, GPIOB, GPIOC };
 
     USART2_Init();
 
@@ -90,18 +80,31 @@ int main (void)
     GPIOB->MODER = 0x55555555;
     GPIOC->MODER = 0x55555555;
 
-    while(1)
-    {
+    for (i = 0; i < GPIOS_COUNT; i++) {
+        bsrrs[i] = 0;
+    }
+    while(1) {
         buf = recv();
-        gpio = code2gpio(buf);
-        send(buf);
-        if (!gpio) continue;
-        buf = recv();
-        pins = 1 << buf;
-        send(buf);
-        buf = recv();
-        gpio->BSRR = buf ? pins : (pins << 16);
-        send(buf);
+        if (buf == 5) {
+            int gpio_id;
+            uint32_t pin;
+            buf = recv();
+            gpio_id = buf - 0x0a;
+            if (gpio_id < 0 ||
+                gpio_id > GPIOS_COUNT - 1) continue;
+            gpio = gpios[gpio_id];
+            buf = recv();
+            pin |= 1 << buf;
+            buf = recv();
+            if (!buf) pin <<= 16;
+            bsrrs[gpio_id] |= pin;
+        } else if (buf == 0x0e) {
+            for (i = 0; i < GPIOS_COUNT; i++) {
+                gpio = gpios[i];
+                gpio->BSRR = bsrrs[i];
+                bsrrs[i] = 0;
+            }
+        }
     }
 
     return 0;
