@@ -85,26 +85,25 @@ int main (void) {
     }
     while(1) {
         buf = recv();
-        if (buf == 5) {
-            int gpio_id;
-            uint32_t pin;
-            buf = recv();
-            gpio_id = buf - 0x0a;
-            if (gpio_id < 0 ||
-                gpio_id > GPIOS_COUNT - 1) continue;
-            gpio = gpios[gpio_id];
-            buf = recv();
-            pin |= 1 << buf;
-            buf = recv();
-            if (!buf) pin <<= 16;
-            bsrrs[gpio_id] |= pin;
-        } else if (buf == 0x0e) {
+        if (buf == 0x0e) {
             for (i = 0; i < GPIOS_COUNT; i++) {
                 gpio = gpios[i];
                 gpio->BSRR = bsrrs[i];
                 bsrrs[i] = 0;
             }
+            continue;
         }
+        int gpio_id;
+        uint32_t pin;
+        gpio_id = buf - 0x0a;
+        if (gpio_id < 0 ||
+            gpio_id > GPIOS_COUNT - 1) continue;
+        gpio = gpios[gpio_id];
+        buf = recv();
+        pin |= 1 << buf;
+        buf = recv();
+        if (!buf) pin <<= 16;
+        bsrrs[gpio_id] |= pin;
     }
 
     return 0;
