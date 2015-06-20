@@ -108,34 +108,16 @@ public class ConnectionService extends Service {
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
-            String request = readRequest(in);
-            Log.d(TAG, request);
-            String response = "HTTP/1.0 404 Not Found\r\n\r\nNot Found";
-            if (request.startsWith("GET /favicon.ico HTTP")) {
-                // Not Found
-            } else if (request.startsWith("GET /s")) {
-                stop();
-                response = "HTTP/1.0 200 OK\r\n\r\nStopped";
-            } else if (request.startsWith("GET /f")) {
-                stop();
-                forward();
-                response = "HTTP/1.0 200 OK\r\n\r\nMoving Forward";
-            } else if (request.startsWith("GET /b")) {
-                stop();
-                backward();
-                response = "HTTP/1.0 200 OK\r\n\r\nMoving Backward";
-            } else if (request.startsWith("GET /l")) {
-                stop();
-                left();
-                response = "HTTP/1.0 200 OK\r\n\r\nMoving Left";
-            } else if (request.startsWith("GET /r")) {
-                stop();
-                right();
-                response = "HTTP/1.0 200 OK\r\n\r\nMoving Right";
+            while (true) {
+                String request = readRequest(in);
+                if (request == null) break;
+                Log.d(TAG, request);
+                String response = servlet(request);
+                out.write(response);
+                out.flush();
+                Log.d(TAG, response);
+                if (request.contains("Connection: close")) break;
             }
-            out.write(response);
-            out.flush();
-            Log.d(TAG, response);
             client.close();
             Log.d(TAG, client.toString() + " closed");
         } catch (IOException e) {
@@ -143,12 +125,43 @@ public class ConnectionService extends Service {
         }
     }
 
+    private String servlet(String request) {
+        String response = "HTTP/1.0 404 Not Found\r\n\r\nNot Found";
+        if (request.startsWith("GET /favicon.ico HTTP")) {
+            // Not Found
+        } else if (request.startsWith("GET /s")) {
+            stop();
+            response = "HTTP/1.0 200 OK\r\n\r\nStopped";
+        } else if (request.startsWith("GET /f")) {
+            stop();
+            forward();
+            response = "HTTP/1.0 200 OK\r\n\r\nMoving Forward";
+        } else if (request.startsWith("GET /b")) {
+            stop();
+            backward();
+            response = "HTTP/1.0 200 OK\r\n\r\nMoving Backward";
+        } else if (request.startsWith("GET /l")) {
+            stop();
+            left();
+            response = "HTTP/1.0 200 OK\r\n\r\nMoving Left";
+        } else if (request.startsWith("GET /r")) {
+            stop();
+            right();
+            response = "HTTP/1.0 200 OK\r\n\r\nMoving Right";
+        }
+        return response;
+    }
+
     private String readRequest(BufferedReader in) {
         String request = "";
         try {
-            String chunk = in.readLine();
-            Log.d(TAG, "Got chunk: " + chunk);
-            if (chunk != null) request += chunk;
+            while(true) {
+                String chunk = in.readLine();
+                if (chunk == null) break;
+                request += chunk;
+                Log.d(TAG, "Got chunk: " + chunk);
+                if (chunk.equals("")) break;
+            }
         } catch (IOException e) {
             Log.e(TAG, e.toString());
         }
