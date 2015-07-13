@@ -7,6 +7,7 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
+import android.widget.Switch;
 
 
 public class MainActivity extends ActionBarActivity {
@@ -41,8 +42,9 @@ public class MainActivity extends ActionBarActivity {
 
     public void onStartServiceClick(View v) {
         Button button = (Button)findViewById(R.id.startServiceButton);
+        Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
         Intent intent = new Intent(this, ConnectionService.class);
-        intent.putExtra("UART", "USB");
+        intent.putExtra("UART", usbSwitch.isChecked() ? "USB" : "Bluetooth");
         if (button.getText().toString().startsWith("Start")) {
             startService(intent);
             button.setText("Stop Service");
