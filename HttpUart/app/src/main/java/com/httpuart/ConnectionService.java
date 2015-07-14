@@ -162,7 +162,7 @@ public class ConnectionService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
-            boolean usb = intent.getExtras().getString("UART") == "USB";
+            boolean usb = intent.getExtras().getString("UART").equals("USB");
             uart = usb ? new UsbUart(this) : new BlueUart();
             uart.open();
             dbg(uart + " opened");
