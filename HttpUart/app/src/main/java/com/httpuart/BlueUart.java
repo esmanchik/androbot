@@ -10,7 +10,7 @@ import java.io.OutputStream;
 import java.util.UUID;
 
 public class BlueUart implements Uart {
-    public final String TAG = "HC-06";
+    // public final String TAG = "HC-06";
 
     private final UUID MY_UUID = UUID.fromString("0001101-0000-1000-8000-00805F9B34FB");
     private BluetoothSocket socket = null;
@@ -23,12 +23,12 @@ public class BlueUart implements Uart {
         String address = null;
         try {
             BluetoothAdapter adapter = BluetoothAdapter.getDefaultAdapter();
-            for(BluetoothDevice d: adapter.getBondedDevices()){
+            for (BluetoothDevice d: adapter.getBondedDevices()) {
                 if (d.getName().equals(deviceName)) address = d.getAddress();
             }
             // Log.d(TAG, address);
             if (address == null) {
-                throw new RuntimeException("Failed to determine address out of " + adapter.getBondedDevices());
+                // throw new RuntimeException("Failed to determine address out of " + adapter.getBondedDevices());
             }
             BluetoothDevice device = adapter.getRemoteDevice(address); // Get the BluetoothDevice object
             socket = device.createRfcommSocketToServiceRecord(MY_UUID);
