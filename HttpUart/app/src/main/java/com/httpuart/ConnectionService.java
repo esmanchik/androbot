@@ -38,11 +38,11 @@ public class ConnectionService extends Service {
                             //});
                             //clientThread.start();
                         }
-                    } catch (IOException e) {
+                    } catch (Exception e) {
                         xcpt(e);
                         server.close();
                     }
-                } catch (IOException e) {
+                } catch (Exception e) {
                     xcpt(e);
                 }
             }
@@ -206,6 +206,18 @@ public class ConnectionService extends Service {
     }
 
     void xcpt(Exception e) {
-        err(e.toString() + " at " + e.getStackTrace().toString());
+        err(formatThrowable(e));
+    }
+
+    private String formatThrowable(Throwable e) {
+        String trace = "";
+        for (StackTraceElement t: e.getStackTrace()) {
+            trace += t.toString() + "\n";
+        }
+        String msg = e.toString() + " at " + trace;
+        if (e.getCause() != null) {
+            msg += "\nCaused by " + formatThrowable(e.getCause());
+        }
+        return msg;
     }
 }
