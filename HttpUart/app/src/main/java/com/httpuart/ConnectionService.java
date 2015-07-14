@@ -198,10 +198,12 @@ public class ConnectionService extends Service {
     }
 
     void dbg(String msg) {
+        Log.d("HTTPUART", msg);
         toast(msg);
     }
 
     void err(String msg) {
+        Log.e("HTTPUART", msg);
         toast("Error: " + msg);
     }
 
