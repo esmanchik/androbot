@@ -15,8 +15,6 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ConnectionService extends Service {
-    public final String TAG = "ConnectionService";
-
     private Uart uart = null;
     private Thread thread = null;
     private ServerSocket server = null;
@@ -27,11 +25,11 @@ public class ConnectionService extends Service {
             public void run() {
                 try {
                     server = new ServerSocket(8080);
-                    Log.d(TAG, server.toString() + " started");
+                    dbg(server.toString() + " started");
                     try {
                         while(true) {
                             Socket client = server.accept();
-                            Log.d(TAG, "Accepted " + client.toString());
+                            dbg("Accepted " + client.toString());
                             //Thread clientThread = new Thread(new Runnable() {
                             //    @Override
                             //    public void run() {
@@ -41,11 +39,11 @@ public class ConnectionService extends Service {
                             //clientThread.start();
                         }
                     } catch (IOException e) {
-                        Log.e(TAG, e.toString());
+                        xcpt(e);
                         server.close();
                     }
                 } catch (IOException e) {
-                    Log.e(TAG, e.toString());
+                    xcpt(e);
                 }
             }
         });
@@ -57,18 +55,18 @@ public class ConnectionService extends Service {
             BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
             while (true) {
                 String request = readRequest(in);
-                if (request == null) break;
-                Log.d(TAG, request);
+                if (request.equals("")) break;
+                dbg(request);
                 String response = servlet(request);
                 out.write(response);
                 out.flush();
-                Log.d(TAG, response);
+                // dbg(response);
                 if (request.contains("Connection: close")) break;
             }
             client.close();
-            Log.d(TAG, client.toString() + " closed");
-        } catch (IOException e) {
-            Log.e(TAG, e.toString());
+            dbg(client.toString() + " closed");
+        } catch (Exception e) {
+            xcpt(e);
         }
     }
 
@@ -106,11 +104,11 @@ public class ConnectionService extends Service {
                 String chunk = in.readLine();
                 if (chunk == null) break;
                 request += chunk;
-                Log.d(TAG, "Got chunk: " + chunk);
+                // dbg("Got chunk: " + chunk);
                 if (chunk.equals("")) break;
             }
         } catch (IOException e) {
-            Log.e(TAG, e.toString());
+            xcpt(e);
         }
         return request;
     }
@@ -125,25 +123,25 @@ public class ConnectionService extends Service {
     private void forward() {
         uart.write(new byte[]{0x0c, 0x08, 0x00});
         uart.write(new byte[]{0x0c, 0x09, 0x01});
-        activate(new byte[] {1, 3, 5, 7});
+        activate(new byte[]{1, 3, 5, 7});
     }
 
     private void backward() {
         uart.write(new byte[]{0x0c, 0x08, 0x00});
         uart.write(new byte[]{0x0c, 0x09, 0x01});
-        activate(new byte[] {0, 2, 4, 6});
+        activate(new byte[]{0, 2, 4, 6});
     }
 
     private void left() {
         uart.write(new byte[]{0x0c, 0x08, 0x01});
         uart.write(new byte[]{0x0c, 0x09, 0x00});
-        activate(new byte[] {1, 3, 4, 6});
+        activate(new byte[]{1, 3, 4, 6});
     }
 
     private void right() {
         uart.write(new byte[]{0x0c, 0x08, 0x01});
         uart.write(new byte[]{0x0c, 0x09, 0x00});
-        activate(new byte[] {0, 2, 5, 7});
+        activate(new byte[]{0, 2, 5, 7});
     }
 
     private void stop() {
@@ -157,31 +155,35 @@ public class ConnectionService extends Service {
 
     @Override
     public void onCreate() {
-        Toast.makeText(this, "connection service created", Toast.LENGTH_SHORT).show();
+        // dbg("connection service created");
         super.onCreate();
     }
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        boolean usb = intent.getExtras().getString("UART") == "USB";
-        uart = usb ? new UsbUart(this) : new BlueUart();
-        Log.d(TAG, uart + " connected");
-        uart.open();
-        thread.start();
-        Toast.makeText(this, "connection service started", Toast.LENGTH_SHORT).show();
+        try {
+            boolean usb = intent.getExtras().getString("UART") == "USB";
+            uart = usb ? new UsbUart(this) : new BlueUart();
+            uart.open();
+            dbg(uart + " opened");
+            thread.start();
+            // dbg("connection service started");
+        } catch(Exception e) {
+            xcpt(e);
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
     @Override
     public void onDestroy() {
-        thread.interrupt();
         try {
+            thread.interrupt();
             server.close();
-        } catch (IOException e) {
-            Log.e(TAG, e.toString());
+            uart.close();
+            dbg("connection service destroyed");
+        } catch(Exception e) {
+            xcpt(e);
         }
-        uart.close();
-        Toast.makeText(this, "connection service destroyed", Toast.LENGTH_SHORT).show();
         super.onDestroy();
     }
 
@@ -189,5 +191,21 @@ public class ConnectionService extends Service {
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    void dbg(String msg) {
+        toast(msg);
+    }
+
+    void err(String msg) {
+        toast("Error: " + msg);
+    }
+
+    void xcpt(Exception e) {
+        err(e.toString() + " at " + e.getStackTrace().toString());
     }
 }

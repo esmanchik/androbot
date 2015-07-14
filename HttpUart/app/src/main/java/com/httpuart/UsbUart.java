@@ -28,7 +28,7 @@ public class UsbUart implements Uart {
         UsbManager manager = (UsbManager) context.getSystemService(Context.USB_SERVICE);
         List<UsbSerialDriver> availableDrivers = UsbSerialProber.getDefaultProber().findAllDrivers(manager);
         if (availableDrivers.isEmpty()) {
-            return;
+            throw new RuntimeException("No USB serial drivers available ");
         }
 
         // Open a connection to the first available driver.
@@ -36,16 +36,20 @@ public class UsbUart implements Uart {
         UsbDeviceConnection connection = manager.openDevice(driver.getDevice());
         if (connection == null) {
             // You probably need to call UsbManager.requestPermission(driver.getDevice(), ..)
-            return;
+            throw new RuntimeException("Failed to open connection to " + driver.getDevice());
         }
 
         // RMost have just one port (port 0).
-        port = driver.getPorts().get(0);
+        List<UsbSerialPort> availablePorts = driver.getPorts();
+        if (availablePorts.isEmpty()) {
+            throw new RuntimeException("No USB serial port available at " + driver);
+        }
         try {
+            port = availablePorts.get(0);
             port.open(connection);
             port.setParameters(9600, 8, 1, 0);
-        } catch (IOException e) {
-            // error("Open port failed")
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to open " + port);
         }
     }
 
@@ -53,8 +57,8 @@ public class UsbUart implements Uart {
     public void write(byte[] bytes) {
         try {
             port.write(bytes, 3000);
-        } catch (IOException e) {
-            // error("Write failed")
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to write " + bytes + " to " + port, e);
         }
     }
 
@@ -62,8 +66,8 @@ public class UsbUart implements Uart {
     public void close() {
         try {
             port.close();
-        } catch (IOException e) {
-            // error("Close port failed")
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to close " + port, e);
         }
     }
 }
