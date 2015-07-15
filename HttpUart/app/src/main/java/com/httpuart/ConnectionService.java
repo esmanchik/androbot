@@ -1,20 +1,27 @@
 package com.httpuart;
 
 import android.app.Service;
+import android.content.Context;
 import android.content.Intent;
+import android.os.Environment;
 import android.os.IBinder;
 import android.util.Log;
 import android.widget.Toast;
 
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
+import java.io.PrintWriter;
 import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ConnectionService extends Service {
+    private PrintWriter log = null;
     private Uart uart = null;
     private Thread thread = null;
     private ServerSocket server = null;
@@ -57,10 +64,21 @@ public class ConnectionService extends Service {
                 String request = readRequest(in);
                 if (request.equals("")) break;
                 dbg(request);
-                String response = servlet(request);
+                String response = "HTTP/1.0 500 Internal Server Error\r\n\r\nInternal Server Error";
+                try {
+                    response = servlet(request);
+                } catch (Exception e) {
+                    try {
+                        uart.close();
+                    } catch (Exception ce) {
+                        xcpt(ce);
+                    }
+                    uart.open();
+                    dbg(uart + " reopened");
+                }
                 out.write(response);
                 out.flush();
-                // dbg(response);
+                dbg(response);
                 if (request.contains("Connection: close")) break;
             }
             client.close();
@@ -104,7 +122,7 @@ public class ConnectionService extends Service {
                 String chunk = in.readLine();
                 if (chunk == null) break;
                 request += chunk;
-                // dbg("Got chunk: " + chunk);
+                dbg("Got chunk: " + chunk);
                 if (chunk.equals("")) break;
             }
         } catch (IOException e) {
@@ -155,7 +173,8 @@ public class ConnectionService extends Service {
 
     @Override
     public void onCreate() {
-        // dbg("connection service created");
+        logOpen();
+        dbg("connection service created");
         super.onCreate();
     }
 
@@ -167,7 +186,7 @@ public class ConnectionService extends Service {
             uart.open();
             dbg(uart + " opened");
             thread.start();
-            // dbg("connection service started");
+            dbg("connection service started");
         } catch(Exception e) {
             xcpt(e);
         }
@@ -197,14 +216,31 @@ public class ConnectionService extends Service {
         Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
     }
 
+    void logOpen() {
+        try {
+            String fileName = "httpuart.log.txt";
+            File logFile = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
+            FileOutputStream logStream = new FileOutputStream(logFile);
+            //FileOutputStream logStream = openFileOutput(fileName, Context.MODE_APPEND | Context.MODE_WORLD_READABLE);
+            log = new PrintWriter(logStream);
+        } catch (Exception e) {
+            toast("Failed to open log: " + e.toString());
+        }
+    }
+
+    void logWrite(String msg) {
+        log.println(msg);
+        log.flush();
+    }
+
     void dbg(String msg) {
         Log.d("HTTPUART", msg);
-        toast(msg);
+        logWrite("DEBUG: " + msg);
     }
 
     void err(String msg) {
         Log.e("HTTPUART", msg);
-        toast("Error: " + msg);
+        logWrite("ERROR: " + msg);
     }
 
     void xcpt(Exception e) {
