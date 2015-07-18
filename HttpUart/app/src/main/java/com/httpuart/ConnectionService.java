@@ -71,11 +71,11 @@ public class ConnectionService extends Service {
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
         try {
-            commands = new Commands(uart, Commands.quadrobot());
             boolean bt = intent.getExtras().getString(UART).equals(UART_BLUETOOTH);
             uart = bt ? new BlueUart() : new UsbUart(this);
             uart.open();
             dbg(uart + " opened");
+            commands = new Commands(uart, Commands.quadrobot());
             thread.start();
             dbg("connection service started");
         } catch(Exception e) {
@@ -115,6 +115,7 @@ public class ConnectionService extends Service {
                 try {
                     response = servlet(request);
                 } catch (Exception e) {
+                    xcpt(e);
                     try {
                         uart.close();
                     } catch (Exception ce) {

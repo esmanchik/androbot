@@ -46,14 +46,15 @@ public class MainActivity extends ActionBarActivity {
     public void onUartClick(View v) {
         Button button = (Button)findViewById(R.id.uartButton);
         try {
-            commands = new Commands(uart, Commands.quadrobot());
             if (button.getText().toString().startsWith("Open")) {
                 Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
-                uart = usbSwitch.isChecked() ? new BlueUart() : new UsbUart(this);
+                uart = usbSwitch.isChecked() ? new UsbUart(this) : new BlueUart();
+                uart.open();
+                commands = new Commands(uart, Commands.quadrobot());
                 button.setText("Close UART");
             } else {
-                uart.close();
                 button.setText("Open UART");
+                uart.close();
             }
         } catch (Exception e) {
             Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();

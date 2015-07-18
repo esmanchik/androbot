@@ -22,7 +22,8 @@ public class Commands {
         if (!map.containsKey(command)) {
             throw new RuntimeException("No such command " + command);
         }
-        uart.write(map.get(command));
+        byte[] bytes = map.get(command);
+        uart.write(bytes);
     }
 
     public static Map quadrobot() {
@@ -39,10 +40,10 @@ public class Commands {
         byte[] bytes = new byte[pins.length * 3 + 1];
         int offset = 0;
         for(byte i: pins) {
-            offset = i * 3;
             bytes[offset] = 0x0c;
             bytes[offset + 1] = i;
             bytes[offset + 2] = 1;
+            offset += 3;
         }
         bytes[offset] = 0x0e;
         return bytes;
@@ -64,25 +65,25 @@ public class Commands {
         // 0e
 
         return activate(new byte[]{
-                1, 3, 5, 7, /* LEDs */ 8, 9
+                1, 3, 5, 7, /* LEDs */ 9
         });
     }
 
     private static byte[] backward() {
         return activate(new byte[]{
-                0, 2, 4, 6, /* LEDs */ 8, 9
+                0, 2, 4, 6, /* LEDs */ 9
         });
     }
 
     private static byte[] left() {
         return activate(new byte[]{
-                1, 3, 4, 6, /* LEDs */ 8, 9
+                1, 3, 4, 6, /* LEDs */ 8
         });
     }
 
     private static byte[] right() {
         return activate(new byte[]{
-                0, 2, 5, 7, /* LEDs */ 8, 9
+                0, 2, 5, 7, /* LEDs */ 8
         });
     }
 
