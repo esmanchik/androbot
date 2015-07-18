@@ -36,6 +36,11 @@ public class Commands {
         return map;
     }
 
+    public static Map loadFromPath(String path) {
+        Map map = new Map();
+        return map;
+    }
+
     private static byte[] activate(byte[] pins) {
         byte[] bytes = new byte[pins.length * 3 + 1];
         int offset = 0;
