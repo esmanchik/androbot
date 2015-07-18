@@ -8,9 +8,12 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Switch;
+import android.widget.Toast;
 
 
 public class MainActivity extends ActionBarActivity {
+    private Uart uart;
+    private Commands commands;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,11 +43,48 @@ public class MainActivity extends ActionBarActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    public void onUartClick(View v) {
+        Button button = (Button)findViewById(R.id.uartButton);
+        try {
+            commands = new Commands(uart, Commands.quadrobot());
+            if (button.getText().toString().startsWith("Open")) {
+                Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
+                uart = usbSwitch.isChecked() ? new BlueUart() : new UsbUart(this);
+                button.setText("Close UART");
+            } else {
+                uart.close();
+                button.setText("Open UART");
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onGoClick(View v) {
+        try {
+            commands.execute("f");
+        } catch (Exception e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    public void onStopClick(View v) {
+        try {
+            commands.execute("s");
+        } catch (Exception e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
     public void onStartServiceClick(View v) {
         Button button = (Button)findViewById(R.id.startServiceButton);
         Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
         Intent intent = new Intent(this, ConnectionService.class);
-        intent.putExtra("UART", usbSwitch.isChecked() ? "USB" : "Bluetooth");
+        intent.putExtra(
+                ConnectionService.UART, usbSwitch.isChecked() ?
+                        ConnectionService.UART_USB :
+                        ConnectionService.UART_BLUETOOTH
+        );
         if (button.getText().toString().startsWith("Start")) {
             startService(intent);
             button.setText("Stop Service");
