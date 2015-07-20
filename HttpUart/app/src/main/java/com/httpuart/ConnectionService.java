@@ -21,6 +21,8 @@ import java.net.ServerSocket;
 import java.net.Socket;
 
 public class ConnectionService extends Service {
+    public static final String COMMANDS = "COMMANDS";
+    public static final String PORT = "PORT";
     public static final String UART = "UART";
     public static final String UART_USB = "USB";
     public static final String UART_BLUETOOTH = "Bluetooth";
@@ -30,36 +32,6 @@ public class ConnectionService extends Service {
     private Thread thread = null;
     private ServerSocket server = null;
     private Commands commands;
-
-    public ConnectionService() {
-        thread = new Thread(new Runnable() {
-            @Override
-            public void run() {
-                try {
-                    server = new ServerSocket(8080);
-                    dbg(server.toString() + " started");
-                    try {
-                        while(true) {
-                            Socket client = server.accept();
-                            dbg("Accepted " + client.toString());
-                            //Thread clientThread = new Thread(new Runnable() {
-                            //    @Override
-                            //    public void run() {
-                            serve(client);
-                            //    }
-                            //});
-                            //clientThread.start();
-                        }
-                    } catch (Exception e) {
-                        xcpt(e);
-                        server.close();
-                    }
-                } catch (Exception e) {
-                    xcpt(e);
-                }
-            }
-        });
-    }
 
     @Override
     public void onCreate() {
@@ -75,7 +47,10 @@ public class ConnectionService extends Service {
             uart = bt ? new BlueUart() : new UsbUart(this);
             uart.open();
             dbg(uart + " opened");
-            commands = new Commands(uart, Commands.quadrobot());
+            commands = new Commands(
+                    uart, Commands.fromString(intent.getExtras().getString(COMMANDS))
+            );
+            thread = connectionThread(intent.getExtras().getInt(PORT));
             thread.start();
             dbg("connection service started");
         } catch(Exception e) {
@@ -101,6 +76,37 @@ public class ConnectionService extends Service {
     public IBinder onBind(Intent intent) {
         // TODO: Return the communication channel to the service.
         throw new UnsupportedOperationException("Not yet implemented");
+    }
+
+    private Thread connectionThread(int port) {
+        final int p = port;
+        return new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try {
+                    server = new ServerSocket(p);
+                    dbg(server.toString() + " started");
+                    try {
+                        while(true) {
+                            Socket client = server.accept();
+                            dbg("Accepted " + client.toString());
+                            //Thread clientThread = new Thread(new Runnable() {
+                            //    @Override
+                            //    public void run() {
+                            serve(client);
+                            //    }
+                            //});
+                            //clientThread.start();
+                        }
+                    } catch (Exception e) {
+                        xcpt(e);
+                        server.close();
+                    }
+                } catch (Exception e) {
+                    xcpt(e);
+                }
+            }
+        });
     }
 
     private void serve(Socket client) {

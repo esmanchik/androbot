@@ -1,6 +1,13 @@
 package com.httpuart;
 
+import com.hoho.android.usbserial.util.HexDump;
+
+import org.json.JSONObject;
+
+import java.io.File;
 import java.util.HashMap;
+import java.util.Iterator;
+import java.util.Scanner;
 
 public class Commands {
     public static class Map extends HashMap<String, byte[]> {};
@@ -36,8 +43,18 @@ public class Commands {
         return map;
     }
 
-    public static Map loadFromPath(String path) {
+    public static Map fromString(String content) {
         Map map = new Map();
+        try {
+            JSONObject json = new JSONObject(content);
+            Iterator<String> keys = json.keys();
+            for(String key = keys.next(); keys.hasNext(); key = keys.next()) {
+                String hex = json.getString(key);
+                map.put(key, HexDump.hexStringToByteArray(hex));
+            }
+        } catch(Exception e) {
+            throw new RuntimeException("Failed to load commands from " + content);
+        }
         return map;
     }
 

@@ -41,7 +41,7 @@
         android:layout_height="wrap_content"
         android:inputType="number"
         android:ems="10"
-        android:id="@+id/portEdit"
+        android:id="@+id/portEditText"
         android:text="8080"
         android:layout_alignBottom="@+id/startServiceButton"
         android:layout_alignParentRight="true"

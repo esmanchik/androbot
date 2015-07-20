@@ -91,17 +91,7 @@ public class MainActivity extends ActionBarActivity {
                 content = new Scanner(new File(path)).useDelimiter("\\Z").next();
                 commandsEdit.setText(content);
             }
-            JSONObject json = new JSONObject(content);
-
-            String[] cmds = new String[map.keySet().size()];
-            for(String cmd: map.keySet().toArray(cmds)) {
-                map.remove(cmd);
-            }
-            Iterator<String> keys = json.keys();
-            for(String key = keys.next(); keys.hasNext(); key = keys.next()) {
-                String hex = json.getString(key);
-                map.put(key, HexDump.hexStringToByteArray(hex));
-            }
+            map = Commands.fromString(content);
         } catch (Exception e) {
             Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
         }
@@ -152,20 +142,30 @@ public class MainActivity extends ActionBarActivity {
     }
 
     public void onStartServiceClick(View v) {
-        Button button = (Button)findViewById(R.id.startServiceButton);
-        Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
-        Intent intent = new Intent(this, ConnectionService.class);
-        intent.putExtra(
-                ConnectionService.UART, usbSwitch.isChecked() ?
-                        ConnectionService.UART_USB :
-                        ConnectionService.UART_BLUETOOTH
-        );
-        if (button.getText().toString().startsWith("Start")) {
-            startService(intent);
-            button.setText("Stop Service");
-        } else {
-            stopService(intent);
-            button.setText("Start Service");
+        try {
+            Button button = (Button)findViewById(R.id.startServiceButton);
+            Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
+            EditText commandsEdit  = (EditText)findViewById(R.id.commandsEditText);
+            EditText portEdit  = (EditText)findViewById(R.id.portEditText);
+            Integer port = Integer.valueOf(portEdit.getText().toString());
+
+            Intent intent = new Intent(this, ConnectionService.class);
+            intent.putExtra(
+                    ConnectionService.UART, usbSwitch.isChecked() ?
+                            ConnectionService.UART_USB :
+                            ConnectionService.UART_BLUETOOTH
+            );
+            intent.putExtra(ConnectionService.PORT, port.intValue());
+            intent.putExtra(ConnectionService.COMMANDS, commandsEdit.getText().toString());
+            if (button.getText().toString().startsWith("Start")) {
+                startService(intent);
+                button.setText("Stop Service");
+            } else {
+                stopService(intent);
+                button.setText("Start Service");
+            }
+        } catch (Exception e) {
+            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
         }
     }
 }
