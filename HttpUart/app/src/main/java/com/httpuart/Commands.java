@@ -46,7 +46,8 @@ public class Commands {
         try {
             JSONObject json = new JSONObject(content);
             Iterator<String> keys = json.keys();
-            for(String key = keys.next(); keys.hasNext(); key = keys.next()) {
+            while(keys.hasNext()) {
+                String key = keys.next();
                 String hex = json.getString(key);
                 map.put(key, HexDump.hexStringToByteArray(hex));
             }

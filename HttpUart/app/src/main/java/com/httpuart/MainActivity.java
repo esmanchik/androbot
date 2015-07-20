@@ -92,6 +92,12 @@ public class MainActivity extends ActionBarActivity {
                 commandsEdit.setText(content);
             }
             map = Commands.fromString(content);
+            commands = new Commands(uart, map);
+            String parsed = "";
+            for(String command: commands.available()) {
+                parsed += command + " ";
+            }
+            Toast.makeText(this, "Parsed commands " + parsed, Toast.LENGTH_SHORT).show();
         } catch (Exception e) {
             Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
         }

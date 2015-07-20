@@ -45,9 +45,14 @@ public class ConnectionService extends Service {
             uart = bt ? new BlueUart() : new UsbUart(this);
             uart.open();
             dbg(uart + " opened");
-            commands = new Commands(
-                    uart, Commands.fromString(intent.getExtras().getString(COMMANDS))
-            );
+            String commandsText = intent.getExtras().getString(COMMANDS);
+            dbg("Got commands " + commandsText);
+            commands = new Commands(uart, Commands.fromString(commandsText));
+            String parsed = "";
+            for(String command: commands.available()) {
+                parsed += command + " ";
+            }
+            dbg("Parsed commands " + parsed);
             thread = connectionThread(intent.getExtras().getInt(PORT));
             thread.start();
             dbg("connection service started");
