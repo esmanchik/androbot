@@ -1,7 +1,6 @@
 package com.httpuart;
 
 import android.app.Service;
-import android.content.Context;
 import android.content.Intent;
 import android.os.Environment;
 import android.os.IBinder;
@@ -11,7 +10,6 @@ import android.widget.Toast;
 import java.io.BufferedReader;
 import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;

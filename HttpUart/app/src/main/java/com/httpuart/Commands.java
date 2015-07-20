@@ -4,10 +4,8 @@ import com.hoho.android.usbserial.util.HexDump;
 
 import org.json.JSONObject;
 
-import java.io.File;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.Scanner;
 
 public class Commands {
     public static class Map extends HashMap<String, byte[]> {};
