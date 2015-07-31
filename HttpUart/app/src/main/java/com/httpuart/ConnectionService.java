@@ -189,11 +189,12 @@ public class ConnectionService extends Service {
             //FileOutputStream logStream = openFileOutput(fileName, Context.MODE_APPEND | Context.MODE_WORLD_READABLE);
             log = new PrintWriter(logStream);
         } catch (Exception e) {
-            toast("Failed to open log: " + e.toString());
+            Log.e("HTTPUART", "Failed to open log: " + e.toString());
         }
     }
 
     void logWrite(String msg) {
+        if (log == null) return;
         log.println(msg);
         log.flush();
     }
