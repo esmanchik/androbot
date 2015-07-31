@@ -177,10 +177,6 @@ public class ConnectionService extends Service {
         return request;
     }
 
-    void toast(String msg) {
-        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
-    }
-
     void logOpen() {
         try {
             String fileName = "httpuart.log.txt";

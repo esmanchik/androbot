@@ -74,7 +74,7 @@ public class MainActivity extends ActionBarActivity {
                 uart.close();
             }
         } catch (Exception e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+            xcpt(e);
         }
     }
 
@@ -97,9 +97,9 @@ public class MainActivity extends ActionBarActivity {
             for(String command: commands.available()) {
                 parsed += command + " ";
             }
-            Toast.makeText(this, "Parsed commands " + parsed, Toast.LENGTH_SHORT).show();
+            toast("Parsed commands " + parsed);
         } catch (Exception e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+            xcpt(e);
         }
     }
 
@@ -127,7 +127,7 @@ public class MainActivity extends ActionBarActivity {
             writer.flush();
             writer.close();
         } catch (Exception e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+            xcpt(e);
         }
     }
 
@@ -135,7 +135,7 @@ public class MainActivity extends ActionBarActivity {
         try {
             commands.execute("f");
         } catch (Exception e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+            xcpt(e);
         }
     }
 
@@ -143,7 +143,7 @@ public class MainActivity extends ActionBarActivity {
         try {
             commands.execute("s");
         } catch (Exception e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+            xcpt(e);
         }
     }
 
@@ -171,7 +171,15 @@ public class MainActivity extends ActionBarActivity {
                 button.setText("Start Service");
             }
         } catch (Exception e) {
-            Toast.makeText(this, e.toString(), Toast.LENGTH_SHORT).show();
+            xcpt(e);
         }
+    }
+
+    void toast(String msg) {
+        Toast.makeText(this, msg, Toast.LENGTH_SHORT).show();
+    }
+
+    void xcpt(Exception e) {
+        toast(e.toString());
     }
 }
