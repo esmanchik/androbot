@@ -1,5 +1,6 @@
 package com.httpuart;
 
+import android.app.Activity;
 import android.content.Intent;
 import android.os.Environment;
 import android.support.v7.app.ActionBarActivity;
@@ -13,14 +14,13 @@ import android.widget.Switch;
 import android.widget.Toast;
 
 import com.hoho.android.usbserial.util.HexDump;
+import com.lamerman.FileDialogOptions;
 
 import org.json.JSONObject;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
-import java.util.Iterator;
 import java.util.Scanner;
 
 
@@ -78,26 +78,53 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    public synchronized void onActivityResult(final int requestCode,
+                                              int resultCode, final Intent data) {
+        try {
+            if (resultCode == Activity.RESULT_OK) {
+                // String path = data.getStringExtra("currentPath");
+                String path = FileDialogOptions.readResultFile(data);
+                EditText fileEdit = (EditText)findViewById(R.id.filePathEditText);
+                fileEdit.setText(path);
+            }
+        } catch (Exception e) {
+            xcpt(e);
+        }
+    }
+
+    private void parsedCommandsToast(String[] commands) {
+        String parsed = "";
+        for (String command : commands) {
+            parsed += command + " ";
+        }
+        toast("Parsed commands " + parsed);
+    }
+
+    public void onFileDialogClick(View v) {
+        FileDialogOptions options = new FileDialogOptions();
+        options.currentPath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS).getAbsolutePath();
+        options.selectFolderMode = false;
+        options.allowCreate = true;
+        Intent intent = options.createFileDialogIntent(this);
+        startActivityForResult(intent, 0);
+    }
+
     public void onLoadClick(View v) {
         try {
-            EditText commandsEdit = (EditText)findViewById(R.id.commandsEditText);
             EditText fileEdit = (EditText)findViewById(R.id.filePathEditText);
+            EditText commandsEdit = (EditText)findViewById(R.id.commandsEditText);
             String path = fileEdit.getText().toString();
-
             String content;
             if (path.equals("")) {
                 content = commandsEdit.getText().toString();
             } else {
-                content = new Scanner(new File(path)).useDelimiter("\\Z").next();
+                File file = new File(path);
+                content = new Scanner(file).useDelimiter("\\Z").next();
                 commandsEdit.setText(content);
             }
             map = Commands.fromString(content);
             commands = new Commands(uart, map);
-            String parsed = "";
-            for(String command: commands.available()) {
-                parsed += command + " ";
-            }
-            toast("Parsed commands " + parsed);
+            parsedCommandsToast(commands.available());
         } catch (Exception e) {
             xcpt(e);
         }
@@ -106,9 +133,10 @@ public class MainActivity extends ActionBarActivity {
     public void onSaveClick(View v) {
         try {
             String fileName = "httpuart.commands.txt";
-            File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
+            // File file = new File(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS), fileName);
             EditText fileEdit = (EditText)findViewById(R.id.filePathEditText);
-            fileEdit.setText(file.getAbsolutePath());
+            File file = new File(fileEdit.getText().toString());
+            // fileEdit.setText(file.getAbsolutePath());
 
             JSONObject json = new JSONObject();
             for(String cmd: map.keySet()) {

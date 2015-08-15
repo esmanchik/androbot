@@ -99,8 +99,8 @@
             android:layout_below="@+id/uartButton"
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
-            android:layout_alignRight="@+id/uartButton"
-            android:layout_alignEnd="@+id/uartButton" />
+            android:layout_toStartOf="@+id/uartButton"
+            android:layout_toLeftOf="@+id/uartButton" />
 
         <Button
             android:layout_width="wrap_content"
@@ -111,6 +111,17 @@
             android:layout_alignParentLeft="true"
             android:layout_alignParentStart="true"
             android:onClick="onSaveClick" />
+
+        <Button
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="..."
+            android:id="@+id/fileDialogButton"
+            android:layout_below="@+id/uartButton"
+            android:layout_toEndOf="@+id/filePathEditText"
+            android:layout_alignBottom="@+id/filePathEditText"
+            android:layout_toRightOf="@+id/filePathEditText"
+            android:onClick="onFileDialogClick" />
 
     </RelativeLayout>
 </ScrollView>
