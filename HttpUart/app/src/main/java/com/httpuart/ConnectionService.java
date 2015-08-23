@@ -136,7 +136,7 @@ public class ConnectionService extends Service {
                 out.write(response);
                 out.flush();
                 dbg(response);
-                if (request.contains("Connection: close")) break;
+                if (!request.contains("User-Agent: Control")) break;
             }
             client.close();
             dbg(client.toString() + " closed");

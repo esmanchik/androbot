@@ -3,22 +3,25 @@ import socket
 import sys,tty,termios
 
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-server.connect(("192.168.33.225", 8080))
+server.connect(("192.168.1.2", 8080))
+
+def command(c):
+    server.send("GET /" + c + " HTTP/1.0\r\nUser-Agent: Control\r\n\r\n")
 
 def stop():
-    server.send("GET /stop HTTP/1.0\r\n\r\n")
+    command("stop")
 
 def forward():
-    server.send("GET /forward HTTP/1.0\r\n\r\n")
+    command("forward")
 
 def backward():
-    server.send("GET /backward HTTP/1.0\r\n\r\n")
+    command("backward")
 
 def right():
-    server.send("GET /left HTTP/1.0\r\n\r\n")
+    command("left")
 
 def left():
-    server.send("GET /right HTTP/1.0\r\n\r\n")
+    command("right")
 
 def main():
     fd = sys.stdin.fileno()
