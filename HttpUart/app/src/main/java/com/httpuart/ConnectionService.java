@@ -16,18 +16,19 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.WindowManager;
 
+import java.io.BufferedOutputStream;
 import java.io.BufferedReader;
-import java.io.BufferedWriter;
-import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.DataOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.io.OutputStreamWriter;
+import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketTimeoutException;
 
 public class ConnectionService extends Service {
     public static final String COMMANDS = "COMMANDS";
@@ -116,15 +117,15 @@ public class ConnectionService extends Service {
                     dbg(server.toString() + " started");
                     try {
                         while(true) {
-                            Socket client = server.accept();
+                            final Socket client = server.accept();
                             dbg("Accepted " + client.toString());
-                            //Thread clientThread = new Thread(new Runnable() {
-                            //    @Override
-                            //    public void run() {
-                            serve(client);
-                            //    }
-                            //});
-                            //clientThread.start();
+                            Thread clientThread = new Thread(new Runnable() {
+                                @Override
+                                public void run() {
+                                    serve(client);
+                                }
+                            });
+                            clientThread.start();
                         }
                     } catch (Exception e) {
                         xcpt(e);
@@ -139,15 +140,30 @@ public class ConnectionService extends Service {
 
     private void serve(Socket client) {
         try {
+            //client.setSoTimeout(5000);
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            BufferedWriter out = new BufferedWriter(new OutputStreamWriter(client.getOutputStream()));
+            OutputStream out = client.getOutputStream();
+            //DataOutputStream out = new DataOutputStream(client.getOutputStream());
+            //BufferedOutputStream out = new BufferedOutputStream(client.getOutputStream());
             while (true) {
-                String request = readRequest(in);
+                String request = "";
+                try {
+                    request = readRequest(in);
+                } catch (Exception e) {
+                    xcpt(e);
+                    break;
+                }
                 if (request.equals("")) break;
                 dbg(request);
-                String response = "HTTP/1.0 500 Internal Server Error\r\n\r\nInternal Server Error";
+                byte[] response = "HTTP/1.0 500 Internal Server Error\r\n\r\nInternal Server Error".getBytes();
                 try {
-                    response = servlet(request);
+                    try {
+                        response = servlet(request);
+                    } catch (Exception e) {
+                        String http = "HTTP/1.0 500 Internal System Error\r\n\r\n" + e;
+                        response = http.getBytes();
+                        xcpt(e);
+                    }
                 } catch (Exception e) {
                     xcpt(e);
                     try {
@@ -155,14 +171,31 @@ public class ConnectionService extends Service {
                     } catch (Exception ce) {
                         xcpt(ce);
                     }
-                    uart.open();
-                    dbg(uart + " reopened");
+                    try {
+                        uart.open();
+                        dbg(uart + " reopened");
+                    } catch (Exception ce) {
+                        xcpt(ce);
+                    }
                 }
+                dbg("Writing " + response.length + " byte response");
                 out.write(response);
                 out.flush();
-                dbg(response);
+                /*int n = 512;
+                for(int i = 0; i < response.length; i += n) {
+                    int left = response.length - i;
+                    int size = left > n ? n : left;
+                    out.write(response, i, size);
+                    out.flush();
+                    Thread.sleep(500);
+                    //dbg("Wrote " + size + " byte chunk at offset " + i);
+                }*/
+                dbg(new String(response));
                 if (!request.contains("User-Agent: Control")) break;
+                //if (request.contains("Connection: close")) break;
             }
+            out.close();
+            //Thread.sleep(5000);
             client.close();
             dbg(client.toString() + " closed");
         } catch (Exception e) {
@@ -170,18 +203,19 @@ public class ConnectionService extends Service {
         }
     }
 
-    private String servlet(String request) {
-        String response = "HTTP/1.0 404 Not Found\r\n\r\nNot Found";
+    private byte[] servlet(String request) {
+        byte[] response = "HTTP/1.0 404 Not Found\r\n\r\nNot Found".getBytes();
         if (request.startsWith("GET /favicon.ico HTTP")) {
             // Not Found
-        } else if (request.startsWith("GET /camera HTTP")) {
+        } else if (request.startsWith("GET /camera.jpg HTTP")) {
             response = camera();
         } else {
             for(String command: commands.available()) {
                 if (request.startsWith("GET /" + command)) {
                     commands.execute(command);
-                    response = "HTTP/1.0 200 OK\r\n\r\n" +
-                            "Command " + command + " executed";
+                    String http = "HTTP/1.0 200 OK\r\n\r\n" +
+                        "Command " + command + " executed";
+                    response = http.getBytes();
                 }
             }
         }
@@ -204,31 +238,34 @@ public class ConnectionService extends Service {
         return request;
     }
 
-    private String camera() {
+    private byte[] camera() {
         synchronized (handler) {
             picture = null;
         }
         handler.obtainMessage().sendToTarget();
         dbg("Send message to LooperThread");
         byte[] picture = null;
-        for (int i = 0; picture == null && i < 30; i++) {
+        for (int i = 0; picture == null && i < 100; i++) {
             SystemClock.sleep(100);
             synchronized (handler) {
                 picture = this.picture;
             }
             dbg("Try "+ i +": picture is " + picture);
         }
-        String response = "HTTP/1.0 500 Internal System Error\r\n\r\n";
+        byte[] response = "HTTP/1.0 500 Internal System Error\r\n\r\n".getBytes();
         if (picture != null) {
             String length = Integer.toString(picture.length);
             dbg("Got picture of " + length + " bytes");
-            String decoded = null;
+            String contentLength = "Content-Length: " + length + " \r\n";
             try {
-                decoded = new String(picture, /*"ASCII"*/"ISO-8859-1");
-                response = "HTTP/1.0 200 OK\r\nContent-Type: image/jpeg\r\n" +
-                        "Content-Length: " + decoded.length() + "\r\n\r\n" + decoded;
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
+                ByteArrayOutputStream stream = new ByteArrayOutputStream( );
+                stream.write("HTTP/1.0 200 OK\r\n".getBytes());
+                stream.write("Content-Type: image/jpeg\r\n".getBytes());
+                stream.write(contentLength.getBytes());
+                stream.write(picture);
+                response = stream.toByteArray();
+            } catch (Exception e) {
+                xcpt(e);
             }
         }
         return response;
