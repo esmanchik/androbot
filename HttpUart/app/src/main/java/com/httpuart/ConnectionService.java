@@ -256,12 +256,13 @@ public class ConnectionService extends Service {
         if (picture != null) {
             String length = Integer.toString(picture.length);
             dbg("Got picture of " + length + " bytes");
-            String contentLength = "Content-Length: " + length + " \r\n";
+            String contentLength = "Content-Length: " + length + "\r\n";
             try {
                 ByteArrayOutputStream stream = new ByteArrayOutputStream( );
                 stream.write("HTTP/1.0 200 OK\r\n".getBytes());
                 stream.write("Content-Type: image/jpeg\r\n".getBytes());
                 stream.write(contentLength.getBytes());
+                stream.write("\r\n".getBytes());
                 stream.write(picture);
                 response = stream.toByteArray();
             } catch (Exception e) {
