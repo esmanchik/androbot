@@ -123,5 +123,19 @@
             android:layout_toRightOf="@+id/filePathEditText"
             android:onClick="onFileDialogClick" />
 
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="Status"
+            android:id="@+id/statusTextView"
+            android:layout_below="@+id/startServiceButton"
+            android:layout_alignParentLeft="false"
+            android:layout_alignParentStart="false"
+            android:layout_alignParentTop="false"
+            android:layout_alignLeft="@+id/startServiceButton"
+            android:layout_alignRight="@+id/portEditText"
+            android:layout_alignEnd="@+id/portEditText"
+            android:layout_alignStart="@id/startServiceButton" />
+
     </RelativeLayout>
 </ScrollView>

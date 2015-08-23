@@ -8,19 +8,27 @@ import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.Switch;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import com.hoho.android.usbserial.util.HexDump;
 import com.lamerman.FileDialogOptions;
 
+import org.apache.http.conn.util.InetAddressUtils;
 import org.json.JSONObject;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.PrintWriter;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Scanner;
 
 
@@ -175,12 +183,29 @@ public class MainActivity extends ActionBarActivity {
         }
     }
 
+    private static String getIpAddress() throws SocketException {
+        List<NetworkInterface> interfaces = Collections.list(NetworkInterface.getNetworkInterfaces());
+        for (NetworkInterface intf : interfaces) {
+            List<InetAddress> addrs = Collections.list(intf.getInetAddresses());
+            for (InetAddress addr : addrs) {
+                if (!addr.isLoopbackAddress()) {
+                    String sAddr = addr.getHostAddress().toUpperCase();
+                    boolean isIPv4 = InetAddressUtils.isIPv4Address(sAddr);
+                    if (isIPv4)
+                        return sAddr;
+                }
+            }
+        }
+        throw new SocketException("Failed to determinels IP address");
+    }
+
     public void onStartServiceClick(View v) {
         try {
             Button button = (Button)findViewById(R.id.startServiceButton);
             Switch usbSwitch = (Switch)findViewById(R.id.usbSwitch);
             EditText commandsEdit  = (EditText)findViewById(R.id.commandsEditText);
             EditText portEdit  = (EditText)findViewById(R.id.portEditText);
+            TextView statusText = (TextView)findViewById(R.id.statusTextView);
             Integer port = Integer.valueOf(portEdit.getText().toString());
 
             Intent intent = new Intent(this, ConnectionService.class);
@@ -198,6 +223,8 @@ public class MainActivity extends ActionBarActivity {
                 stopService(intent);
                 button.setText("Start Service");
             }
+
+            statusText.setText("IP: " + getIpAddress());
         } catch (Exception e) {
             xcpt(e);
         }
