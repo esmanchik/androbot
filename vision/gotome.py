@@ -52,12 +52,14 @@ def lifecycle():
         if r > wr:
             d = r - wr;
             s = d * 0.007
+            s = 0.2
             print(d, s, "->")
             right()
             time.sleep(s)
         elif l < wl:
             d = wl - l;
             s = d * 0.005
+            s = 0.2
             print("<-", s, d)
             left()
             time.sleep(s)
