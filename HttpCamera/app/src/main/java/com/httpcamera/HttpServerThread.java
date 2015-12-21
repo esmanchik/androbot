@@ -86,10 +86,13 @@ public class HttpServerThread extends Thread {
                 OutputStream stream = client.getOutputStream();
                 byte[] picture = msg.getData().getByteArray("picture");
                 if (picture == null) {
-                    sendError("No picture taken", stream);
+                    sendError(stream, "No picture taken");
                 } else {
-                    sendJpeg(picture, stream);
+                    sendJpeg(stream, picture);
                 }
+                stream.flush();
+                close(client); // if not keep alive
+                // otherwise read one more request
             } catch (IOException e) {
                 e.printStackTrace();
                 close(client);
@@ -109,26 +112,25 @@ public class HttpServerThread extends Thread {
         return request;
     }
 
-    private void sendJpeg(byte[] picture, OutputStream stream) throws IOException {
-        String length = Integer.toString(picture.length);
-        String contentLength = "Content-Length: " + length + "\r\n";
-        stream.write("HTTP/1.0 200 OK\r\n".getBytes());
-        stream.write("Content-Type: image/jpeg\r\n".getBytes());
-        stream.write(contentLength.getBytes());
-        stream.write("\r\n".getBytes());
-        stream.write(picture);
-        stream.flush();
+    private void sendJpeg(OutputStream stream, byte[] picture) throws IOException {
+        sendContent(stream, "200 OK", "image/jpeg", picture);
     }
 
-    private void sendError(String text, OutputStream stream) throws IOException {
-        String length = Integer.toString(text.length());
-        String contentLength = "Content-Length: " + length + "\r\n";
-        stream.write("HTTP/1.0 500 Error\r\n".getBytes());
-        stream.write("Content-Type: text/plain\r\n".getBytes());
-        stream.write(contentLength.getBytes());
-        stream.write("\r\n".getBytes());
-        stream.write(text.getBytes());
-        stream.flush();
+    private void sendError(OutputStream stream, String text) throws IOException {
+        sendContent(stream, "500 Error", "text/plain", text.getBytes());
+    }
+
+    private void sendContent(OutputStream stream, String status, String type, byte[] data) throws IOException {
+        String length = Integer.toString(data.length);
+        writeString(stream, "HTTP/1.0 " + status + "\r\n");
+        writeString(stream, "Content-Type: " + type  + "\r\n");
+        writeString(stream, "Content-Length: " + length + "\r\n");
+        writeString(stream, "\r\n");
+        stream.write(data);
+    }
+
+    private void writeString(OutputStream stream, String s) throws IOException {
+        stream.write(s.getBytes());
     }
 
     private static void close(Closeable socket) {
