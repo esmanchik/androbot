@@ -3,6 +3,8 @@ package com.httpcamera;
 import android.content.Context;
 import android.hardware.Camera;
 import android.hardware.Camera.Size;
+import android.os.Handler;
+import android.os.Message;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -16,7 +18,6 @@ class Preview implements SurfaceHolder.Callback {
 
     Preview(SurfaceView surfaceView) {
         mSurfaceView = surfaceView;
-
         // Install a SurfaceHolder.Callback so we get notified when the
         // underlying surface is created and destroyed.
         mHolder = mSurfaceView.getHolder();
@@ -59,19 +60,29 @@ class Preview implements SurfaceHolder.Callback {
         // applications. Applications should release the camera immediately
         // during onPause() and re-open() it during onResume()).
         mCamera.release();
+        mCamera = null;
     }
 
-    public void takePicture() {
+    public void takePicture(final Handler pictureHandler) {
+        if (mCamera == null) {
+            Message pictureMessage = pictureHandler.obtainMessage();
+            pictureMessage.getData().putByteArray("picture", null);
+            pictureMessage.sendToTarget();
+            return;
+        }
         mCamera.takePicture(null, null, new Camera.PictureCallback() {
             @Override
             public void onPictureTaken(byte[] data, Camera camera) {
-                try {
+                /*try {
                     FileOutputStream stream = new FileOutputStream("/storage/sdcard0/httpcamera.jpg");
                     stream.write(data);
                     stream.close();
                 } catch(Exception e) {
                     e.printStackTrace();
-                }
+                }*/
+                Message pictureMessage = pictureHandler.obtainMessage();
+                pictureMessage.getData().putByteArray("picture", data);
+                pictureMessage.sendToTarget();
                 camera.startPreview();
             }
         });
