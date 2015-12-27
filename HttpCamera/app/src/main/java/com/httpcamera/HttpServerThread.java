@@ -5,13 +5,14 @@ import android.os.Looper;
 import android.os.Message;
 
 import java.io.BufferedReader;
-import java.io.Closeable;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.LinkedList;
+
+import static com.httpcamera.HttpUtil.*;
 
 public class HttpServerThread extends Thread {
     private ServerSocket server;
@@ -98,46 +99,6 @@ public class HttpServerThread extends Thread {
                 close(client);
             }
             acceptClient();
-        }
-    }
-
-    private String readRequest(BufferedReader in) throws IOException {
-        String request = "";
-        while(true) {
-            String chunk = in.readLine();
-            if (chunk == null) break;
-            request += chunk;
-            if (chunk.equals("")) break;
-        }
-        return request;
-    }
-
-    private void sendJpeg(OutputStream stream, byte[] picture) throws IOException {
-        sendContent(stream, "200 OK", "image/jpeg", picture);
-    }
-
-    private void sendError(OutputStream stream, String text) throws IOException {
-        sendContent(stream, "500 Error", "text/plain", text.getBytes());
-    }
-
-    private void sendContent(OutputStream stream, String status, String type, byte[] data) throws IOException {
-        String length = Integer.toString(data.length);
-        writeString(stream, "HTTP/1.0 " + status + "\r\n");
-        writeString(stream, "Content-Type: " + type  + "\r\n");
-        writeString(stream, "Content-Length: " + length + "\r\n");
-        writeString(stream, "\r\n");
-        stream.write(data);
-    }
-
-    private void writeString(OutputStream stream, String s) throws IOException {
-        stream.write(s.getBytes());
-    }
-
-    private static void close(Closeable socket) {
-        try {
-            socket.close();
-        } catch (IOException e) {
-            e.printStackTrace();
         }
     }
 }

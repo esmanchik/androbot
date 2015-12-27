@@ -37,7 +37,7 @@ public class MainActivity extends Activity {
         state = savedInstanceState; // == null ? new Bundle() : savedInstanceState;
         serviceToggleButton = (ToggleButton)findViewById(R.id.serviceToggleButton);
         SurfaceView surface = (SurfaceView)findViewById(R.id.surfaceView);
-        preview = new Preview(surface);
+        // preview = new Preview(surface);
         cameraHandler = new CameraHandler(getMainLooper());
         serviceConnection = new ServiceConnection() {
             @Override
@@ -81,14 +81,16 @@ public class MainActivity extends Activity {
     }
 
     public void onService(View v) {
-        Intent intent = new Intent(this, HttpService.class);
+        Intent intent =
+            // new Intent(this, HttpService.class);
+            new Intent(this, HttpSurfaceService.class);
         // intent.putExtra(ConnectionService.PORT, port.intValue());
         if (serviceToggleButton.isChecked()) {
-            //startService(intent);
-            bindService(intent, serviceConnection, BIND_AUTO_CREATE);
+            startService(intent);
+            //bindService(intent, serviceConnection, BIND_AUTO_CREATE);
         } else {
-            //stopService(intent);
-            unbindService(serviceConnection);
+            stopService(intent);
+            //unbindService(serviceConnection);
         }
     }
 
