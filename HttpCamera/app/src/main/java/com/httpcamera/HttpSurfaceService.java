@@ -169,7 +169,7 @@ public class HttpSurfaceService extends Service {
 
     class ServerThread extends Thread {
         private ServerHandler handler;
-        private ServerSocket server;
+        private volatile ServerSocket server;
 
         ServerThread() {
             server = null;
@@ -189,12 +189,6 @@ public class HttpSurfaceService extends Service {
         }
 
         public void shutdown() {
-            if (handler != null) {
-                Looper looper = handler.getLooper();
-                if (looper != null) {
-                    looper.quit();
-                }
-            }
             if (server != null) {
                 try {
                     server.close();
@@ -205,7 +199,7 @@ public class HttpSurfaceService extends Service {
         }
     }
 
-    private ServerThread thread;
+    private volatile ServerThread thread;
     private LocalBinder localBinder;
 
     public static class LocalBinder extends Binder {
@@ -227,7 +221,6 @@ public class HttpSurfaceService extends Service {
     public void onDestroy() {
         if (thread != null) {
             thread.shutdown();
-            thread.interrupt();
         }
     }
 
