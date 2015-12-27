@@ -114,7 +114,11 @@ public class HttpSurfaceService extends Service {
 
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
-            camera = Camera.open();
+            camera = Camera.open(0);
+            if (camera == null)
+            {
+                return;
+            }
             try {
                 camera.setPreviewDisplay(surface.getHolder());
             } catch (IOException e) {
@@ -131,6 +135,10 @@ public class HttpSurfaceService extends Service {
 
         @Override
         public void surfaceDestroyed(SurfaceHolder holder) {
+            if (camera == null)
+            {
+                return;
+            }
             camera.stopPreview();
             camera.release();
             camera = null;

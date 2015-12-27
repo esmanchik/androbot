@@ -27,7 +27,11 @@ class Preview implements SurfaceHolder.Callback {
 
     @Override
     public void surfaceCreated(SurfaceHolder holder) {
-        mCamera = Camera.open();
+        mCamera = Camera.open(0);
+        if (mCamera == null)
+        {
+            return;
+        }
         try {
             mCamera.setPreviewDisplay(mHolder);
         } catch (IOException e) {
@@ -40,6 +44,10 @@ class Preview implements SurfaceHolder.Callback {
 
         @Override
     public void surfaceChanged(SurfaceHolder holder, int format, int w, int h) {
+        if (mCamera == null)
+        {
+            return;
+        }
         mCamera.stopPreview();
         // Now that the size is known, set up the camera parameters and begin
         // the preview.
@@ -53,6 +61,10 @@ class Preview implements SurfaceHolder.Callback {
     }
 
     public void surfaceDestroyed(SurfaceHolder holder) {
+        if (mCamera == null)
+        {
+            return;
+        }
         // Call stopPreview() to stop updating the preview surface.
         mCamera.stopPreview();
 
