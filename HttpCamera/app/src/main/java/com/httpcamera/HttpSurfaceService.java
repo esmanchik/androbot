@@ -169,11 +169,16 @@ public class HttpSurfaceService extends Service {
 
     class ServerThread extends Thread {
         private ServerHandler handler;
+        private ServerSocket server;
+
+        ServerThread() {
+            server = null;
+        }
 
         @Override
         public void run() {
             try {
-                ServerSocket server = new ServerSocket(8080);
+                server = new ServerSocket(8080);
                 Looper.prepare();
                 handler = new ServerHandler(HttpSurfaceService.this, server);
                 handler.nextClient();
@@ -183,8 +188,20 @@ public class HttpSurfaceService extends Service {
             }
         }
 
-        public Looper getLooper() {
-            return handler == null ? null : handler.getLooper();
+        public void shutdown() {
+            if (handler != null) {
+                Looper looper = handler.getLooper();
+                if (looper != null) {
+                    looper.quit();
+                }
+            }
+            if (server != null) {
+                try {
+                    server.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
         }
     }
 
@@ -209,9 +226,7 @@ public class HttpSurfaceService extends Service {
     @Override
     public void onDestroy() {
         if (thread != null) {
-            if (thread.getLooper() != null) {
-                thread.getLooper().quit();
-            }
+            thread.shutdown();
             thread.interrupt();
         }
     }
