@@ -226,7 +226,20 @@ public class HttpSurfaceService extends Service {
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
-        thread.start();
+        if (thread.isAlive()) {
+            thread.shutdown();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            thread = new ServerThread();
+            thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return super.onStartCommand(intent, flags, startId);
     }
 
