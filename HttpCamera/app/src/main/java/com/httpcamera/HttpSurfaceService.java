@@ -115,6 +115,7 @@ public class HttpSurfaceService extends Service {
         @Override
         public void surfaceCreated(SurfaceHolder holder) {
             camera = Camera.open(0);
+            camera.setDisplayOrientation(90);
             if (camera == null)
             {
                 return;
