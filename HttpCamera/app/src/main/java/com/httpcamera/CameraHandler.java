@@ -97,15 +97,25 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
         }
     }
 
+    private static void setFlashMode(Camera camera, String mode) {
+        Camera.Parameters p = camera.getParameters();
+        p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        camera.setParameters(p);
+    }
+
     @Override
     public void handleMessage(Message msg) {
         if (camera == null) {
             sendPicture(null);
         } else {
+            camera.stopPreview();
+            setFlashMode(camera, Camera.Parameters.FLASH_MODE_TORCH);
+            camera.startPreview();
             camera.takePicture(null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
                     sendPicture(data);
+                    setFlashMode(camera, Camera.Parameters.FLASH_MODE_OFF);
                     camera.startPreview();
                 }
             });
