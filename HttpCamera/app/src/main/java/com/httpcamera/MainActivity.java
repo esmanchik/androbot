@@ -28,7 +28,11 @@ public class MainActivity extends Activity {
         SurfaceView surface = (SurfaceView)findViewById(R.id.surfaceView);
         cameraHandler = new CameraHandler(surface);
         if (state == null || !state.getBoolean("serviceToggleButtonState")) {
-            cameraHandler.openCamera();
+            try {
+                cameraHandler.openCamera();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
         serviceConnection = new ServiceConnection() {
             @Override
@@ -43,7 +47,7 @@ public class MainActivity extends Activity {
             public void onServiceDisconnected(ComponentName name) {
                 service.shutdown();
                 service = null;
-                cameraHandler.openCamera();
+                //cameraHandler.openCamera();
             }
         };
     }

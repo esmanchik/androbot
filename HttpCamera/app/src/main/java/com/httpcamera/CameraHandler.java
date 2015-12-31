@@ -7,6 +7,7 @@ import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
 import java.io.IOException;
+import java.util.List;
 
 public class CameraHandler extends Handler implements SurfaceHolder.Callback {
     private SurfaceView surface;
@@ -27,17 +28,21 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
         pictureHandler = picHandler;
     }
 
-    @Override
-    public void surfaceCreated(SurfaceHolder holder) {
-        if (camera == null) {
-            return;
-        }
+    private void resetPreviewDisplay() {
         try {
             camera.setPreviewDisplay(surface.getHolder());
         } catch (IOException e) {
             e.printStackTrace();
             return;
         }
+    }
+
+    @Override
+    public void surfaceCreated(SurfaceHolder holder) {
+        if (camera == null) {
+            return;
+        }
+        resetPreviewDisplay();
         camera.startPreview();
     }
 
@@ -46,6 +51,19 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
         if (camera != null) {
             camera.stopPreview();
             camera.setDisplayOrientation(width > height ? 0 : 90);
+            Camera.Parameters parameters = camera.getParameters();
+            List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
+            float ratio = width / (float)height;
+            Camera.Size best = null;
+            for(Camera.Size size: supportedPreviewSizes) {
+                if (best == null || Math.abs(size.width / (float)size.height - ratio) < 0.01) {
+                    best = size;
+                }
+            }
+            parameters.setPreviewSize(best.width, best.height);
+            parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
+            camera.setParameters(parameters);
+            resetPreviewDisplay();
             camera.startPreview();
         }
     }
