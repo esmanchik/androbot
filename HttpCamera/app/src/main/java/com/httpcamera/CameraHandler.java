@@ -53,17 +53,26 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
             camera.setDisplayOrientation(width > height ? 0 : 90);
             Camera.Parameters parameters = camera.getParameters();
             List<Camera.Size> supportedPreviewSizes = parameters.getSupportedPreviewSizes();
-            float ratio = width / (float)height;
+            float surfaceRatio = width / (float)height;
             Camera.Size best = null;
             for(Camera.Size size: supportedPreviewSizes) {
-                if (best == null || Math.abs(size.width / (float)size.height - ratio) < 0.01) {
+                float previewSizeRatio = size.width / (float)size.height;
+                if (best == null) {
                     best = size;
+                    continue;
+                }
+                float bestSizeRatio = size.width / (float)size.height;
+                if (Math.abs(previewSizeRatio - surfaceRatio) < Math.abs(bestSizeRatio - surfaceRatio)) {
+                    best = size;
+                }
+                if (Math.abs(previewSizeRatio - surfaceRatio) < 0.001) {
+                    break;
                 }
             }
             parameters.setPreviewSize(best.width, best.height);
             parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_CONTINUOUS_PICTURE);
             camera.setParameters(parameters);
-            resetPreviewDisplay();
+            // resetPreviewDisplay();
             camera.startPreview();
         }
     }
