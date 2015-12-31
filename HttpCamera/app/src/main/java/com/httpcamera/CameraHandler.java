@@ -99,7 +99,7 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
 
     private static void setFlashMode(Camera camera, String mode) {
         Camera.Parameters p = camera.getParameters();
-        p.setFlashMode(Camera.Parameters.FLASH_MODE_TORCH);
+        p.setFlashMode(mode);
         camera.setParameters(p);
     }
 
