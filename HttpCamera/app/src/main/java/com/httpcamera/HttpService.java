@@ -3,34 +3,39 @@ package com.httpcamera;
 import android.app.Service;
 import android.content.Intent;
 import android.os.Binder;
-import android.os.Handler;
-import android.os.HandlerThread;
 import android.os.IBinder;
+import android.os.Looper;
+import android.view.SurfaceView;
+
+import java.io.IOException;
+import java.net.ServerSocket;
 
 public class HttpService extends Service {
-    private HttpServerThread thread;
-    private LocalBinder localBinder;
+    private volatile ServerThread thread;
+    private volatile SurfaceView surfaceView;
+    private volatile CameraHandler cameraHandler;
 
-    public static class LocalBinder extends Binder {
-        public HttpService service;
+    public class LocalBinder extends Binder {
+        public HttpService getService() {
+            return HttpService.this;
+        }
     }
 
     public HttpService() {
-        thread = new HttpServerThread();
-        localBinder = new LocalBinder();
-        localBinder.service = this;
+        thread = new ServerThread();
     }
 
     @Override
     public void onCreate() {
-
+        super.onCreate();
+        surfaceView = SurfaceFactory.create(this);
+        cameraHandler = new CameraHandler(surfaceView);
+        cameraHandler.openCamera();
     }
 
     @Override
     public void onDestroy() {
-        if (thread != null) {
-            thread.interrupt();
-        }
+        shutdown();
     }
 
     @Override
@@ -40,11 +45,66 @@ public class HttpService extends Service {
 
     @Override
     public IBinder onBind(Intent intent) {
-        return localBinder;
+        return new LocalBinder();
     }
 
-    public void start(MainActivity.CameraHandler camHandler) {
-        thread.setCameraHandler(camHandler);
-        thread.start();
+    public void start() {
+        if (thread.isAlive()) {
+            thread.shutdown();
+            try {
+                thread.join();
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+        try {
+            thread = new ServerThread();
+            thread.start();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    public void shutdown() {
+        cameraHandler.closeCamera();
+        thread.shutdown();
+    }
+
+    public void setCameraHandler(CameraHandler camHandler) {
+        cameraHandler = camHandler;
+    }
+
+    class ServerThread extends Thread {
+        private volatile ServerSocket server;
+
+        ServerThread() {
+            server = null;
+        }
+
+        @Override
+        public void run() {
+            try {
+                server = new ServerSocket(8080);
+                Looper.prepare();
+                ServerHandler handler = new ServerHandler(server);
+                cameraHandler.setPictureHandler(handler);
+                handler.setCameraHandler(cameraHandler);
+                handler.nextClient();
+                Looper.loop();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }
+
+        public void shutdown() {
+            if (server != null) {
+                try {
+                    server.close();
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+                server = null;
+            }
+        }
     }
 }

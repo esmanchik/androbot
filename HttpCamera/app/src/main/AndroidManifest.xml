@@ -24,7 +24,7 @@
         </activity>
 
         <service
-            android:name=".HttpSurfaceService"
+            android:name=".HttpService"
             android:enabled="true"
             android:exported="true" >
         </service>
