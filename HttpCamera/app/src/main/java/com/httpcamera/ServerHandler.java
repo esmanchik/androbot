@@ -43,14 +43,15 @@ class ServerHandler extends Handler {
     }
 
     public void nextClient() {
-        currentClient = acceptClient(server);
+        do {
+            currentClient = acceptClient(server);
+        } while (currentClient == null);
     }
 
     private Socket acceptClient(ServerSocket server) {
         try {
             Socket client = server.accept();
-            processRequest(client);
-            return client;
+            return processRequest(client);
         } catch (Exception e) {
             e.printStackTrace();
             close(server);
@@ -62,18 +63,26 @@ class ServerHandler extends Handler {
         }
     }
 
-    public void processRequest(Socket client) {
+    public Socket processRequest(Socket client) {
         String request = "";
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-            request = "GET / HTTP/1.0\r\n\r\n"; //readRequest(in);
-            if (cameraHandler != null && !request.equals("")) {
-                cameraHandler.obtainMessage().sendToTarget();
-            }
+            // request = "GET / HTTP/1.0\r\n\r\n";
+            request = readRequest(in);
         } catch (IOException e) {
             e.printStackTrace();
             close(client);
+            return null;
         }
+        if (request.equals("")) {
+            close(client);
+            return null;
+        }
+        if (cameraHandler != null) {
+            cameraHandler.obtainMessage().sendToTarget();
+            return client;
+        }
+        return null;
     }
 
     public void respond(Socket client, byte[] picture) {
