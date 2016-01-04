@@ -3,6 +3,8 @@ package com.httpcamera;
 import android.hardware.Camera;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 
@@ -12,20 +14,10 @@ import java.util.List;
 public class CameraHandler extends Handler implements SurfaceHolder.Callback {
     private SurfaceView surface;
     private volatile Camera camera;
-    private volatile Handler pictureHandler;
 
     public CameraHandler(SurfaceView surfaceView) {
-        this(surfaceView, null);
-    }
-
-    public CameraHandler(SurfaceView surfaceView, Handler picHandler) {
-        setPictureHandler(picHandler);
         surface = surfaceView;
         surface.getHolder().addCallback(this);
-    }
-
-    public void setPictureHandler(Handler picHandler) {
-        pictureHandler = picHandler;
     }
 
     private void resetPreviewDisplay() {
@@ -85,8 +77,12 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
     }
 
     public void openCamera() {
-        camera = Camera.open(0);
-        camera.setDisplayOrientation(90);
+        try {
+            camera = Camera.open(0);
+            camera.setDisplayOrientation(90);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     public void closeCamera() {
@@ -103,10 +99,14 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
         camera.setParameters(p);
     }
 
-    @Override
-    public void handleMessage(Message msg) {
+    public interface PictureHolder {
+        void setPicture(byte[] picture);
+    }
+
+    public void shot(PictureHolder pictureHolder) {
+        final PictureHolder holder = pictureHolder;
         if (camera == null) {
-            sendPicture(null);
+            holder.setPicture(new byte[1]); // dummy picture here
         } else {
             camera.stopPreview();
             setFlashMode(camera, Camera.Parameters.FLASH_MODE_TORCH);
@@ -114,7 +114,27 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
             camera.takePicture(null, null, new Camera.PictureCallback() {
                 @Override
                 public void onPictureTaken(byte[] data, Camera camera) {
-                    sendPicture(data);
+                    holder.setPicture(data);
+                    setFlashMode(camera, Camera.Parameters.FLASH_MODE_OFF);
+                    camera.startPreview();
+                }
+            });
+        }
+    }
+
+    @Override
+    public void handleMessage(Message msg) {
+        final Message source = msg;
+        if (camera == null) {
+            sendPicture(source, null);
+        } else {
+            camera.stopPreview();
+            setFlashMode(camera, Camera.Parameters.FLASH_MODE_TORCH);
+            camera.startPreview();
+            camera.takePicture(null, null, new Camera.PictureCallback() {
+                @Override
+                public void onPictureTaken(byte[] data, Camera camera) {
+                    sendPicture(source, data);
                     setFlashMode(camera, Camera.Parameters.FLASH_MODE_OFF);
                     camera.startPreview();
                 }
@@ -123,11 +143,17 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
         }
     }
 
-    private void sendPicture(byte[] picture) {
-        if (pictureHandler != null) {
-            Message pictureMessage = pictureHandler.obtainMessage();
-            pictureMessage.getData().putByteArray("picture", picture);
-            pictureMessage.sendToTarget();
+    private void sendPicture(Message source, byte[] picture) {
+        int socketId = source.getData().getInt("socket");
+        Message pictureMessage = Message.obtain();
+        pictureMessage.getData().putByteArray("picture", picture);
+        Messenger dest = source.replyTo;
+        if (dest != null) {
+            try {
+                dest.send(pictureMessage);
+            } catch (RemoteException e) {
+                e.printStackTrace();
+            }
         }
     }
 }

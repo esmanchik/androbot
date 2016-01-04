@@ -40,7 +40,9 @@ public class HttpUtil {
 
     public static void close(Closeable socket) {
         try {
-            socket.close();
+            if (socket != null) {
+                socket.close();
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }

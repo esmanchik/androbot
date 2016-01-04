@@ -3,12 +3,13 @@ package com.httpcamera;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.os.Messenger;
+import android.os.RemoteException;
 
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
-import java.net.ServerSocket;
 import java.net.Socket;
 
 import static com.httpcamera.HttpUtil.close;
@@ -16,45 +17,22 @@ import static com.httpcamera.HttpUtil.readRequest;
 import static com.httpcamera.HttpUtil.sendError;
 import static com.httpcamera.HttpUtil.sendJpeg;
 
-class ServerHandler extends Handler {
-    private ServerSocket server;
-    private Socket currentClient;
-    private CameraHandler cameraHandler;
+class ClientHandler extends Handler {
+    private Socket client;
+    private Messenger messenger;
+    private Handler cameraHandler;
 
-    public ServerHandler(ServerSocket serverSocket) {
-        this(serverSocket, null);
+    public ClientHandler(Socket socket, Handler camMessenger) {
+        messenger = new Messenger(this);
+        client = socket;
+        cameraHandler = camMessenger;
     }
 
-    public ServerHandler(ServerSocket serverSocket, CameraHandler camHandler) {
-        currentClient = null;
-        server = serverSocket;
-        setCameraHandler(camHandler);
-    }
-
-    @Override
-    public void handleMessage(Message msg) {
-        byte[] picture = msg.getData().getByteArray("picture");
-        respond(currentClient, picture);
-        nextClient();
-    }
-
-    public void setCameraHandler(CameraHandler camHandler) {
-        cameraHandler = camHandler;
-    }
-
-    public void nextClient() {
-        do {
-            currentClient = acceptClient(server);
-        } while (currentClient == null);
-    }
-
-    private Socket acceptClient(ServerSocket server) {
+    public Socket handleClient() {
         try {
-            Socket client = server.accept();
             return processRequest(client);
         } catch (Exception e) {
             e.printStackTrace();
-            close(server);
             Looper looper = getLooper();
             if (looper != null) {
                 looper.quit();
@@ -63,7 +41,13 @@ class ServerHandler extends Handler {
         }
     }
 
-    public Socket processRequest(Socket client) {
+    @Override
+    public void handleMessage(Message msg) {
+        byte[] picture = msg.getData().getByteArray("picture");
+        respond(client, picture);
+    }
+
+    public Socket processRequest(final Socket client) {
         String request = "";
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(client.getInputStream()));
@@ -79,7 +63,14 @@ class ServerHandler extends Handler {
             return null;
         }
         if (cameraHandler != null) {
-            cameraHandler.obtainMessage().sendToTarget();
+            Message msg = Message.obtain(cameraHandler, new Runnable() {
+                @Override
+                public void run() {
+
+                }
+            });
+
+            msg.sendToTarget();
             return client;
         }
         return null;

@@ -28,11 +28,7 @@ public class MainActivity extends Activity {
         SurfaceView surface = (SurfaceView)findViewById(R.id.surfaceView);
         cameraHandler = new CameraHandler(surface);
         if (state == null || !state.getBoolean("serviceToggleButtonState")) {
-            try {
-                cameraHandler.openCamera();
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
+            cameraHandler.openCamera();
         }
         serviceConnection = new ServiceConnection() {
             @Override
