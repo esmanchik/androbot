@@ -38,7 +38,12 @@ public class ClientTask implements Runnable {
 
                     @Override
                     public void run() {
-                        cameraHandler.shot(this);
+                        try {
+                            cameraHandler.shot(this);
+                            Thread.sleep(1500); // don't tease system to close app
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
                     }
 
                     @Override
@@ -52,7 +57,7 @@ public class ClientTask implements Runnable {
                         }
                         return picture;
                     }
-                };
+                }
                 PictureTask pictureTask = new PictureTask();
                 Message.obtain(cameraHandler, pictureTask).sendToTarget();
                 try {
@@ -65,10 +70,9 @@ public class ClientTask implements Runnable {
                 }
             }
             close(client);
-        } catch (IOException e) {
+        } catch (Exception e) {
             e.printStackTrace();
             close(client);
-            return;
         }
     }
 }
