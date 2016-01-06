@@ -79,6 +79,9 @@ public class CameraHandler extends Handler implements SurfaceHolder.Callback {
     public void openCamera() {
         try {
             camera = Camera.open(0);
+            Camera.Parameters p = camera.getParameters();
+            p.setRotation(90);
+            camera.setParameters(p);
             camera.setDisplayOrientation(90);
         } catch (Exception e) {
             e.printStackTrace();
